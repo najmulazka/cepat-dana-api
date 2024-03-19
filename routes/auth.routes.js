@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { register, activationCode, login, whoiam } = require('../controllers/auth.controllers');
+const { restrict } = require('../middlewares/restrict.middlewares');
+
+router.post('/register', register);
+router.post('/activationCode', activationCode);
+router.post('/login', login);
+
+// test who i am
+router.get('/whoiam', restrict, whoiam);
+
+module.exports = router;

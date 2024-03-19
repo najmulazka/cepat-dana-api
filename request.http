@@ -1,0 +1,3 @@
+
+GET http://localhost:3000/api/v1/auth/whoiam
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im5ham15bGFzQGdtYWlsLmNvbSIsImlhdCI6MTcxMDczMjgxNH0.J-gA2mpFIFAYOXsRhBcTPnewgQ7rxtB8DORf0i0H18E

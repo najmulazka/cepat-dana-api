@@ -18,6 +18,7 @@ CREATE TABLE "ActivationCodes" (
     "id" SERIAL NOT NULL,
     "activationCode" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "isUse" BOOLEAN NOT NULL DEFAULT false,
     "userId" INTEGER NOT NULL,
 
     CONSTRAINT "ActivationCodes_pkey" PRIMARY KEY ("id")
@@ -28,6 +29,7 @@ CREATE TABLE "ResetCodes" (
     "id" SERIAL NOT NULL,
     "resetCode" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "isUse" BOOLEAN NOT NULL DEFAULT false,
     "userId" INTEGER NOT NULL,
 
     CONSTRAINT "ResetCodes_pkey" PRIMARY KEY ("id")
