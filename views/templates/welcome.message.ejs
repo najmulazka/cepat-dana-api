@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TechAcademy OTP Verification</title>
+    <title>SkyPass OTP Verification</title>
     <style>
+      /* Styling email content */
       body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         background-color: #f0f0f0;
         margin: 0;
         padding: 0;
@@ -37,15 +36,23 @@
         color: #4b0082;
         margin-top: 20px;
       }
+
+      .cta-button {
+        display: inline-block;
+        background-color: #4b0082;
+        color: #fff;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Cepat Dana OTP Verification</h1>
-      <p>Welcome to Cepat Dana App! To complete your registration, please enter the following OTP code:</p>
-      <p class="otp-code"><%= otp %></p>
-      <p>If you didn't sign up for Cepat Dana, please disregard this email.</p>
-      <p>Thank you for choosing Cepat Dana.</p>
+      <h1>Welcome to Cepat Dana!</h1>
+      <p>Congratulations, <%= user.fullName %>!</p>
+      <p>Your registration was successful. Thank you for joining us!</p>
     </div>
   </body>
 </html>

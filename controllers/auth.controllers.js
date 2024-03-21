@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET_KEY } = process.env;
 
 module.exports = {
+  // Register
   register: async (req, res) => {
     const { fullName, email, password, passwordConfirmation, noTelp } = req.body;
 
@@ -55,12 +56,12 @@ module.exports = {
       where: { userId: user.id },
       create: {
         activationCode: otp,
-        createdAt: new Date(),
+        createdAt: new Date(Date.now()),
         userId: user.id,
       },
       update: {
         activationCode: otp,
-        createdAt: new Date(),
+        createdAt: new Date(Date.now()),
         isUse: false,
       },
     });
@@ -76,6 +77,7 @@ module.exports = {
     });
   },
 
+  // Activation account
   activationCode: async (req, res) => {
     const { email, otp } = req.body;
 
@@ -93,9 +95,6 @@ module.exports = {
 
     const activationCode = await prisma.activationCodes.findUnique({ where: { userId: user.id } });
     if (otp !== activationCode.activationCode) {
-      // console.log(activationCode.activationCode);
-      // console.log(otp);
-      // console.log('sdaf');
       return res.status(400).json({
         status: false,
         message: 'Bad Request',
@@ -136,6 +135,19 @@ module.exports = {
       },
     });
 
+    const html = await getHtml('welcome.message.ejs', { user });
+    await sendMail(email, 'Activation Success', html);
+
+    await prisma.notifications.create({
+      data: {
+        title: 'Activation Success',
+        header: 'Welcome to Cepat Dana!',
+        message: `Congratulations, ${user.fullName}! 
+        Your registration was successful. Thank you for joining us!`,
+        userId: user.id,
+      },
+    });
+
     res.status(200).json({
       status: true,
       message: 'Activation code successful',
@@ -144,6 +156,57 @@ module.exports = {
     });
   },
 
+  // Resend otp code to gmail
+  resendOtp: async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
+
+    const user = await prisma.users.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'User does not exist',
+        data: null,
+      });
+    }
+
+    if (user && user.isActivated) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'Active user',
+        data: null,
+      });
+    }
+
+    await prisma.activationCodes.upsert({
+      where: { userId: user.id },
+      create: {
+        activationCode: otp,
+        createdAt: new Date(Date.now()),
+        userId: user.id,
+      },
+      update: {
+        activationCode: otp,
+        createdAt: new Date(Date.now()),
+        isUse: false,
+      },
+    });
+
+    const html = await getHtml('otp.message.ejs', { otp });
+    await sendMail(email, 'Activation code verification', html);
+
+    await res.status(200).json({
+      status: true,
+      message: 'resending the otp code was successful',
+      err: null,
+      data: { user, otp },
+    });
+  },
+
+  // Login
   login: async (req, res) => {
     const { email, password } = req.body;
 
@@ -189,6 +252,7 @@ module.exports = {
     });
   },
 
+  // Tes who logged in
   whoiam: async (req, res, next) => {
     try {
       res.status(200).json({
