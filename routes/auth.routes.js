@@ -1,11 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { register, resendOtp, activationCode, login, whoiam } = require('../controllers/auth.controllers');
+const { register, resendOtp, activationCode, forrgotPassword, verifyOtpPassword, resetPassword, login, whoiam } = require('../controllers/auth.controllers');
 const { restrict } = require('../middlewares/restrict.middlewares');
 
 router.post('/register', register);
-router.post('/resendOtp', resendOtp);
-router.post('/activationCode', activationCode);
+
+router.post('/resend-otp', resendOtp);
+router.post('/activation-code', activationCode);
+
+router.post('/forrgot-password', forrgotPassword);
+router.post('/verify-otp-password', verifyOtpPassword);
+router.post('/reset-password', resetPassword);
+
 router.post('/login', login);
 
 // test who i am

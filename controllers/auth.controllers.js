@@ -156,7 +156,7 @@ module.exports = {
     });
   },
 
-  // Resend otp code to gmail
+  // Resend activation otp code to gmail
   resendOtp: async (req, res) => {
     const { email } = req.body;
 
@@ -201,6 +201,178 @@ module.exports = {
     await res.status(200).json({
       status: true,
       message: 'resending the otp code was successful',
+      err: null,
+      data: { user, otp },
+    });
+  },
+
+  // forrgot password
+  forrgotPassword: async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
+
+    const user = await prisma.users.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'User does not exist',
+        data: null,
+      });
+    }
+
+    if (user && !user.isActivated) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'Inactive user',
+        data: null,
+      });
+    }
+
+    await prisma.resetCodes.upsert({
+      where: { userId: user.id },
+      create: {
+        resetCode: otp,
+        createdAt: new Date(Date.now()),
+        userId: user.id,
+      },
+      update: {
+        resetCode: otp,
+        createdAt: new Date(Date.now()),
+        isUse: false,
+      },
+    });
+
+    const html = await getHtml('otp.forgot.message.ejs', { otp });
+    await sendMail(email, 'Forrgot password verification', html);
+
+    await res.status(200).json({
+      status: true,
+      message: 'Send the otp forrgot password was successful',
+      err: null,
+      data: { user, otp },
+    });
+  },
+
+  // Verify OTP password
+  verifyOtpPassword: async (req, res) => {
+    const { email, otp } = req.body;
+
+    if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
+    if (!otp) return res.status(400).json({ status: false, message: 'Bad Request', err: 'otp is required', data: null });
+
+    const user = await prisma.users.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'User does not exist',
+        data: null,
+      });
+    }
+
+    if (user && !user.isActivated) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'Inactive user',
+        data: null,
+      });
+    }
+
+    const verifyOtp = await prisma.resetCodes.findUnique({ where: { userId: user.id } });
+    if (otp !== verifyOtp.resetCode) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'Wrong OTP code',
+        data: null,
+      });
+    }
+
+    if (verifyOtp.createdAt <= new Date(Date.now() - 5 * 60 * 1000)) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'OTP code has expired',
+        data: null,
+      });
+    }
+
+    if (verifyOtp.isUse) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'OTP code has been used',
+        data: null,
+      });
+    }
+
+    await prisma.resetCodes.update({
+      where: { userId: user.id },
+      data: {
+        isUse: true,
+      },
+    });
+
+    res.status(200).json({
+      status: true,
+      message: 'Verify OTP password successful',
+      err: null,
+      data: { user },
+    });
+  },
+
+  // forrgot password
+  resetPassword: async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
+    if (!password) return res.status(400).json({ status: false, message: 'Bad Request', err: 'password is required', data: null });
+
+    const user = await prisma.users.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'User does not exist',
+        data: null,
+      });
+    }
+
+    if (user && !user.isActivated) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'Inactive user',
+        data: null,
+      });
+    }
+
+    const encryptedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.users.update({
+      where: { email },
+      data: { password: encryptedPassword },
+    });
+
+    const html = await getHtml('reset.password.message.ejs', { user });
+    await sendMail(email, 'Reset Password', html);
+
+    await prisma.notifications.create({
+      data: {
+        title: 'Reset password',
+        header: 'Forrgot Password Succesful',
+        message: 'Congratulations, the password has been successfully reset',
+        userId: user.id,
+      },
+    });
+
+    await res.status(200).json({
+      status: true,
+      message: 'Reset Password was successful',
       err: null,
       data: { user, otp },
     });
