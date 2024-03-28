@@ -83,10 +83,12 @@ model IdentityCards {
   gender              String
   village             String
   subdistrict         String
+  regency             String
+  province            String
   country             String
   address             String
   religion            String
-  marialStatus        String
+  maritalStatus        String
   jobs                String
   isVerified          String   @default("Waiting for approval")
   userId              Int      @unique
@@ -97,6 +99,8 @@ model CurrentLocations {
   id          Int    @id @default(autoincrement())
   village     String
   subdistrict String
+  regency     String
+  province    String
   country     String
   address     String
   userId      Int    @unique

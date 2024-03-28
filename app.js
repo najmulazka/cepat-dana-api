@@ -7,7 +7,7 @@ const morgan = require('morgan');
 const path = require('path');
 const { PORT = 3000 } = process.env;
 const router = require('./routes/index.routes');
-const { notFound, serverError } = require('./middlewares/errorHandler.middlewares');
+const { notFound, serverError } = require('./middlewares/error-handler.middlewares');
 
 // konfigurasi
 app.use(morgan('dev'));

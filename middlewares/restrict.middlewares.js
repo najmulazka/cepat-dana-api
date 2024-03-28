@@ -4,7 +4,7 @@ const { JWT_SECRET_KEY } = process.env;
 
 module.exports = {
   restrict: async (req, res, next) => {
-    const {authorization} = req.headers;
+    const { authorization } = req.headers;
     if (!authorization) {
       return res.status(401).json({
         status: false,
@@ -14,9 +14,7 @@ module.exports = {
       });
     }
 
-    const token = authorization.split(' ')[1];
-
-    jwt.verify(token, JWT_SECRET_KEY, async (err, decoded) => {
+    jwt.verify(authorization, JWT_SECRET_KEY, async (err, decoded) => {
       if (err) {
         return res.status(401).json({
           status: false,

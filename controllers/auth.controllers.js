@@ -9,14 +9,23 @@ module.exports = {
   // Register
   register: async (req, res) => {
     const { fullName, email, password, passwordConfirmation, noTelp } = req.body;
+    const requiredFields = ['fullName', 'email', 'password', 'passwordConfirmation', 'noTelp'];
 
-    if (!fullName) return res.status(400).json({ status: false, message: 'Bad Request', err: 'fullName is required', data: null });
-    if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
-    if (!password) return res.status(400).json({ status: false, message: 'Bad Request', err: 'password is required', data: null });
-    if (!passwordConfirmation) return res.status(400).json({ status: false, message: 'Bad Request', err: 'passwordConfirmation is required', data: null });
-    if (!noTelp) return res.status(400).json({ status: false, message: 'Bad Request', err: 'noTelp is required', data: null });
+    // Check req.body
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        return res.status(400).json({
+          status: false,
+          message: 'Bad Request',
+          err: `field ${field} is required`,
+        });
+      }
+    }
 
+    // Get user
     const userExist = await prisma.users.findUnique({ where: { email } });
+
+    // Check if the user exist and is active
     if (userExist && userExist.isActivated) {
       return res.status(400).json({
         status: false,
@@ -26,6 +35,7 @@ module.exports = {
       });
     }
 
+    // Check password end password confirmation is same
     if (password !== passwordConfirmation) {
       return res.status(400).json({
         status: false,
@@ -35,8 +45,10 @@ module.exports = {
       });
     }
 
+    // Encrypted password
     const encyptedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
     const user = await prisma.users.upsert({
       where: { email },
       create: {
@@ -52,6 +64,7 @@ module.exports = {
       },
     });
 
+    // save otp in database
     await prisma.activationCodes.upsert({
       where: { userId: user.id },
       create: {
@@ -66,6 +79,7 @@ module.exports = {
       },
     });
 
+    // send email to user
     const html = await getHtml('otp.message.ejs', { otp });
     await sendMail(email, 'Activation code verification', html);
 
@@ -81,9 +95,13 @@ module.exports = {
   activationCode: async (req, res) => {
     const { email, otp } = req.body;
 
+    // Check req.body
     if (!otp) return res.status(400).json({ status: false, message: 'Bad Request', err: 'otp is required', data: null });
+
+    // Get user by email
     const user = await prisma.users.findUnique({ where: { email } });
 
+    // Check if the user exist
     if (!user) {
       return res.status(400).json({
         status: false,
@@ -93,7 +111,10 @@ module.exports = {
       });
     }
 
+    // Get otp code in the database by user id
     const activationCode = await prisma.activationCodes.findUnique({ where: { userId: user.id } });
+
+    // Check if the otp code in req.body same with otp code in the database
     if (otp !== activationCode.activationCode) {
       return res.status(400).json({
         status: false,
@@ -103,6 +124,7 @@ module.exports = {
       });
     }
 
+    // Check whether the otp code in the database has expired (5 minutes)
     if (activationCode.createdAt <= new Date(Date.now() - 5 * 60 * 1000)) {
       return res.status(400).json({
         status: false,
@@ -112,6 +134,7 @@ module.exports = {
       });
     }
 
+    // Check if the otp code in the database has been used
     if (activationCode.isUse) {
       return res.status(400).json({
         status: false,
@@ -121,6 +144,7 @@ module.exports = {
       });
     }
 
+    // Update otp code in the database has been used
     await prisma.activationCodes.update({
       where: { userId: user.id },
       data: {
@@ -128,6 +152,7 @@ module.exports = {
       },
     });
 
+    // Update the user status to active
     await prisma.users.update({
       where: { email },
       data: {
@@ -135,9 +160,11 @@ module.exports = {
       },
     });
 
+    // Send email to user
     const html = await getHtml('welcome.message.ejs', { user });
     await sendMail(email, 'Activation Success', html);
 
+    // Save notification to database by user id
     await prisma.notifications.create({
       data: {
         title: 'Activation Success',
@@ -160,9 +187,13 @@ module.exports = {
   resendOtp: async (req, res) => {
     const { email } = req.body;
 
+    // Check req.body
     if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
 
+    // Get user
     const user = await prisma.users.findUnique({ where: { email } });
+
+    // Check if the user exist
     if (!user) {
       return res.status(400).json({
         status: false,
@@ -172,7 +203,8 @@ module.exports = {
       });
     }
 
-    if (user && user.isActivated) {
+    // check if the user is active
+    if (user.isActivated) {
       return res.status(400).json({
         status: false,
         message: 'Bad Request',
@@ -181,6 +213,7 @@ module.exports = {
       });
     }
 
+    // Save otp in database
     await prisma.activationCodes.upsert({
       where: { userId: user.id },
       create: {
@@ -195,6 +228,7 @@ module.exports = {
       },
     });
 
+    // Send email to user
     const html = await getHtml('otp.message.ejs', { otp });
     await sendMail(email, 'Activation code verification', html);
 
@@ -210,9 +244,13 @@ module.exports = {
   forrgotPassword: async (req, res) => {
     const { email } = req.body;
 
+    // Check req.body
     if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
 
+    // Get user
     const user = await prisma.users.findUnique({ where: { email } });
+
+    // Check if the user exist
     if (!user) {
       return res.status(400).json({
         status: false,
@@ -222,7 +260,8 @@ module.exports = {
       });
     }
 
-    if (user && !user.isActivated) {
+    // check if the user is active
+    if (!user.isActivated) {
       return res.status(400).json({
         status: false,
         message: 'Bad Request',
@@ -231,6 +270,7 @@ module.exports = {
       });
     }
 
+    // Save otp in database
     await prisma.resetCodes.upsert({
       where: { userId: user.id },
       create: {
@@ -245,6 +285,7 @@ module.exports = {
       },
     });
 
+    // Send email to user
     const html = await getHtml('otp.forgot.message.ejs', { otp });
     await sendMail(email, 'Forrgot password verification', html);
 
@@ -260,10 +301,14 @@ module.exports = {
   verifyOtpPassword: async (req, res) => {
     const { email, otp } = req.body;
 
+    // Check req.body
     if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
     if (!otp) return res.status(400).json({ status: false, message: 'Bad Request', err: 'otp is required', data: null });
 
+    // Get user
     const user = await prisma.users.findUnique({ where: { email } });
+
+    // Check if the user exist
     if (!user) {
       return res.status(400).json({
         status: false,
@@ -273,7 +318,8 @@ module.exports = {
       });
     }
 
-    if (user && !user.isActivated) {
+    // Check user if the is active
+    if (!user.isActivated) {
       return res.status(400).json({
         status: false,
         message: 'Bad Request',
@@ -282,7 +328,10 @@ module.exports = {
       });
     }
 
+    // Get otp in database by user id
     const verifyOtp = await prisma.resetCodes.findUnique({ where: { userId: user.id } });
+
+    // Check if the otp code in req.body same with otp code in the database
     if (otp !== verifyOtp.resetCode) {
       return res.status(400).json({
         status: false,
@@ -292,6 +341,7 @@ module.exports = {
       });
     }
 
+    // Check whether the otp code in the database has expired (5 minutes)
     if (verifyOtp.createdAt <= new Date(Date.now() - 5 * 60 * 1000)) {
       return res.status(400).json({
         status: false,
@@ -301,6 +351,7 @@ module.exports = {
       });
     }
 
+    // Check if the otp code in the database has been used
     if (verifyOtp.isUse) {
       return res.status(400).json({
         status: false,
@@ -310,6 +361,7 @@ module.exports = {
       });
     }
 
+    // Update the otp code in the database has been used
     await prisma.resetCodes.update({
       where: { userId: user.id },
       data: {
@@ -329,10 +381,14 @@ module.exports = {
   resetPassword: async (req, res) => {
     const { email, password } = req.body;
 
+    // Check req.body
     if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
     if (!password) return res.status(400).json({ status: false, message: 'Bad Request', err: 'password is required', data: null });
 
+    // Get user
     const user = await prisma.users.findUnique({ where: { email } });
+
+    // Check if the user exist
     if (!user) {
       return res.status(400).json({
         status: false,
@@ -342,7 +398,8 @@ module.exports = {
       });
     }
 
-    if (user && !user.isActivated) {
+    // Check if the user is active
+    if (!user.isActivated) {
       return res.status(400).json({
         status: false,
         message: 'Bad Request',
@@ -351,16 +408,20 @@ module.exports = {
       });
     }
 
+    // bcrypt password
     const encryptedPassword = await bcrypt.hash(password, 10);
 
+    // Update user password in the database by email
     await prisma.users.update({
       where: { email },
       data: { password: encryptedPassword },
     });
 
+    // Send email to user
     const html = await getHtml('reset.password.message.ejs', { user });
     await sendMail(email, 'Reset Password', html);
 
+    // Save notification to database by user id
     await prisma.notifications.create({
       data: {
         title: 'Reset password',
@@ -382,10 +443,14 @@ module.exports = {
   login: async (req, res) => {
     const { email, password } = req.body;
 
+    // Check req.body
     if (!email) return res.status(400).json({ status: false, message: 'Bad Request', err: 'email is required', data: null });
     if (!password) return res.status(400).json({ status: false, message: 'Bad Request', err: 'password is required', data: null });
 
+    // Get user by email
     const user = await prisma.users.findUnique({ where: { email } });
+
+    // Check if the user exist
     if (!user) {
       return res.status(400).json({
         status: false,
@@ -395,6 +460,7 @@ module.exports = {
       });
     }
 
+    // Check if the user is active
     if (!user.isActivated) {
       return res.status(400).json({
         status: false,
@@ -404,6 +470,7 @@ module.exports = {
       });
     }
 
+    // Check if the password in req.body and password in the database are the same
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res.status(400).json({
@@ -414,6 +481,7 @@ module.exports = {
       });
     }
 
+    // create token
     const token = await jwt.sign({ email: user.email }, JWT_SECRET_KEY);
 
     res.status(200).json({
