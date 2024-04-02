@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { restrict } = require('../middlewares/restrict.middlewares');
 const { admin } = require('../middlewares/admin.middlewares');
-const { input, update } = require('../controllers/identity-cards.controllers');
+const { index, input, update } = require('../controllers/identity-cards.controllers');
 const { image } = require('../libs/multer.libs');
 
+router.get('/', admin, index);
+router.get('/show', restrict, index);
 router.post(
   '/input',
   restrict,
@@ -14,7 +16,6 @@ router.post(
   ]),
   input
 );
-
 router.put(
   '/update/:identityCardId',
   admin,

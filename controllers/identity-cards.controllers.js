@@ -3,6 +3,39 @@ const path = require('path');
 const imagekit = require('../libs/imagekit.libs');
 
 module.exports = {
+  index: async (req, res, next) => {
+    try {
+      const identityCard = await prisma.identityCards.findMany({ include: { users: true } });
+
+      res.status(200).json({
+        status: true,
+        message: 'Created',
+        err: null,
+        data: identityCard,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  show: async (req, res, next) => {
+    try {
+      const identityCard = await prisma.identityCards.findUnique({
+        where: { userId: req.user.id },
+        include: { users: true },
+      });
+
+      res.status(200).json({
+        status: true,
+        message: 'Created',
+        err: null,
+        data: identityCard,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   input: async (req, res, next) => {
     try {
       const { selfiePhoto, identityCardImage } = req.files;
@@ -72,7 +105,7 @@ module.exports = {
         },
       });
 
-      res.status(200).json({
+      res.status(201).json({
         status: true,
         message: 'Created',
         err: null,
@@ -90,8 +123,8 @@ module.exports = {
       const { selfiePhoto, identityCardImage } = req.files;
       const requiredFiles = ['selfiePhoto', 'identityCardImage'];
 
-      const { identityCardNumber, placeBirth, dateBirth, gender, village, subdistrict, regency, province, country, address, religion, maritalStatus, jobs, userId } = req.body;
-      const requiredFields = ['identityCardNumber', 'placeBirth', 'dateBirth', 'gender', 'village', 'subdistrict', 'regency', 'province', 'country', 'address', 'religion', 'maritalStatus', 'jobs'];
+      const { identityCardNumber, placeBirth, dateBirth, gender, village, subdistrict, regency, province, country, address, religion, maritalStatus, jobs, isVerified } = req.body;
+      const requiredFields = ['identityCardNumber', 'placeBirth', 'dateBirth', 'gender', 'village', 'subdistrict', 'regency', 'province', 'country', 'address', 'religion', 'maritalStatus', 'jobs', 'isVerified'];
 
       // Check req.body
       for (const field of requiredFields) {
@@ -102,6 +135,15 @@ module.exports = {
             err: `field ${field} is required`,
           });
         }
+      }
+
+      if (isVerified !== 'true' && isVerified !== 'false') {
+        return res.status(400).json({
+          status: false,
+          message: 'Bad Request',
+          err: `field isVerified not boolean`,
+          data: null,
+        });
       }
 
       // Check req.files
@@ -178,7 +220,7 @@ module.exports = {
           religion,
           maritalStatus,
           jobs,
-          userId: req.user.id,
+          isVerified,
         },
       });
 
