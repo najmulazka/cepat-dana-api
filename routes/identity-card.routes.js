@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { restrict } = require('../middlewares/restrict.middlewares');
 const { admin } = require('../middlewares/admin.middlewares');
-const { index, input, update } = require('../controllers/identity-cards.controllers');
+const { index, input, update, delet } = require('../controllers/identity-cards.controllers');
 const { image } = require('../libs/multer.libs');
 
 router.get('/', admin, index);
@@ -25,5 +25,6 @@ router.put(
   ]),
   update
 );
+router.delete('/delete/:identityCardId', admin, delet);
 
 module.exports = router;

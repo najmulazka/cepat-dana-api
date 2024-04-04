@@ -159,6 +159,14 @@ module.exports = {
 
       // Get identity card
       const identityCardExist = await prisma.identityCards.findUnique({ where: { id: Number(identityCardId) } });
+      if (!identityCardExist) {
+        return res.status(404).json({
+          status: false,
+          message: 'Not Found',
+          err: null,
+          data: null,
+        });
+      }
 
       // Delete photo in imagekit by file id
       imagekit.deleteFile(identityCardExist.selfiePhotoId, function (error, result) {
@@ -229,6 +237,59 @@ module.exports = {
         message: 'Update identity card successful',
         err: null,
         data: identityCard,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // Delete Identity Card
+  delet: async (req, res, next) => {
+    try {
+      const { identityCardId } = req.params;
+
+      // Get identity card
+      const identityCardExist = await prisma.identityCards.findUnique({ where: { id: Number(identityCardId) } });
+      if (!identityCardExist) {
+        return res.status(404).json({
+          status: false,
+          message: 'Not Found',
+          err: null,
+          data: null,
+        });
+      }
+
+      // Delete photo in imagekit by file id
+      imagekit.deleteFile(identityCardExist.selfiePhotoId, function (error, result) {
+        if (error) {
+          return res.status(400).json({
+            status: false,
+            message: 'Crash Imagekit',
+            err: error,
+            data: null,
+          });
+        }
+      });
+
+      imagekit.deleteFile(identityCardExist.identityCardImageId, function (error, result) {
+        if (error) {
+          return res.status(400).json({
+            status: false,
+            message: 'Crash Imagekit',
+            err: error,
+            data: null,
+          });
+        }
+      });
+
+      // delete identity card in database by id
+      await prisma.identityCards.delete({ where: { id: Number(identityCardId) } });
+
+      res.status(200).json({
+        status: true,
+        message: 'Delete identity card successful',
+        err: null,
+        data: null,
       });
     } catch (err) {
       next(err);
