@@ -9,7 +9,7 @@ module.exports = {
 
       res.status(200).json({
         status: true,
-        message: 'Created',
+        message: 'OK',
         err: null,
         data: identityCard,
       });
@@ -27,7 +27,7 @@ module.exports = {
 
       res.status(200).json({
         status: true,
-        message: 'Created',
+        message: 'OK',
         err: null,
         data: identityCard,
       });
