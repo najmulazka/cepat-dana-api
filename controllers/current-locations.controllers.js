@@ -14,7 +14,7 @@ module.exports = {
 
   show: async (req, res, next) => {
     const currentLocation = await prisma.currentLocations.findUnique({
-      where: { id: req.user.id },
+      where: { userId: req.user.id },
       include: { users: true },
     });
 
@@ -28,6 +28,53 @@ module.exports = {
     }
 
     res.status(200).json({
+      status: true,
+      message: 'OK',
+      err: null,
+      data: currentLocation,
+    });
+  },
+
+  input: async (req, res, next) => {
+    const { village, subdistrict, regency, province, country, address } = req.body;
+    const requiredFields = ['village', 'subdistrict', 'regency', 'province', 'country', 'address'];
+
+    // Check req.body
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        return res.status(400).json({
+          status: false,
+          message: 'Bad Request',
+          err: `field ${field} is required`,
+          data: null,
+        });
+      }
+    }
+
+    const currentLocationExist = await prisma.currentLocations.findUnique({ where: { userId: req.user.id } });
+
+    if (currentLocationExist) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'current location already exist',
+        data: null,
+      });
+    }
+
+    const currentLocation = await prisma.currentLocations.create({
+      data: {
+        village,
+        subdistrict,
+        regency,
+        province,
+        country,
+        address,
+        userId: req.user.id,
+      },
+    });
+
+    res.status(201).json({
       status: true,
       message: 'OK',
       err: null,
