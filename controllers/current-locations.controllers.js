@@ -81,6 +81,7 @@ module.exports = {
       data: currentLocation,
     });
   },
+
   update: async (req, res, next) => {
     const { currentLocationId } = req.params;
     const { village, subdistrict, regency, province, country, address } = req.body;
@@ -111,10 +112,10 @@ module.exports = {
     const currentLocationExist = await prisma.currentLocations.findUnique({ where: { id: Number(currentLocationId) } });
 
     if (!currentLocationExist) {
-      return res.status(400).json({
+      return res.status(404).json({
         status: false,
         message: 'Bad Request',
-        err: 'current location does not exist',
+        err: 'Resource not found',
         data: null,
       });
     }
@@ -136,6 +137,42 @@ module.exports = {
       message: 'Update current location successful',
       err: null,
       data: currentLocation,
+    });
+  },
+
+  delet: async (req, res, next) => {
+    const { currentLocationId } = req.params;
+
+    // Check req.params
+    if (!currentLocationId) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: `field is required`,
+        data: null,
+      });
+    }
+
+    const currentLocationExist = await prisma.currentLocations.findUnique({ where: { id: Number(currentLocationId) } });
+
+    if (!currentLocationExist) {
+      return res.status(400).json({
+        status: false,
+        message: 'Not Found',
+        err: 'Resource not found',
+        data: null,
+      });
+    }
+
+    const currentLocation = await prisma.currentLocations.delete({
+      where: { id: Number(currentLocationId) },
+    });
+
+    res.status(200).json({
+      status: true,
+      message: 'Delete current location successful',
+      err: null,
+      data: null,
     });
   },
 };
