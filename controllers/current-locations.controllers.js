@@ -81,4 +81,61 @@ module.exports = {
       data: currentLocation,
     });
   },
+  update: async (req, res, next) => {
+    const { currentLocationId } = req.params;
+    const { village, subdistrict, regency, province, country, address } = req.body;
+    const requiredFields = ['village', 'subdistrict', 'regency', 'province', 'country', 'address'];
+
+    // Check req.params
+    if (!currentLocationId) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: `field is required`,
+        data: null,
+      });
+    }
+
+    // Check req.body
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        return res.status(400).json({
+          status: false,
+          message: 'Bad Request',
+          err: `field ${field} is required`,
+          data: null,
+        });
+      }
+    }
+
+    const currentLocationExist = await prisma.currentLocations.findUnique({ where: { id: Number(currentLocationId) } });
+
+    if (!currentLocationExist) {
+      return res.status(400).json({
+        status: false,
+        message: 'Bad Request',
+        err: 'current location does not exist',
+        data: null,
+      });
+    }
+
+    const currentLocation = await prisma.currentLocations.update({
+      where: { id: Number(currentLocationId) },
+      data: {
+        village,
+        subdistrict,
+        regency,
+        province,
+        country,
+        address,
+      },
+    });
+
+    res.status(200).json({
+      status: true,
+      message: 'Update current location successful',
+      err: null,
+      data: currentLocation,
+    });
+  },
 };
