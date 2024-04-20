@@ -2,7 +2,7 @@ const prisma = require('../libs/prisma.libs');
 
 module.exports = {
   index: async (req, res) => {
-    const currentLocations = await prisma.currentLocations.findMany();
+    const currentLocations = await prisma.currentLocations.findMany({ include: { users: true } });
 
     res.status(200).json({
       status: true,
