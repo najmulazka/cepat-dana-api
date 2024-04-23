@@ -113,4 +113,29 @@ module.exports = {
       next(err);
     }
   },
+
+  delet: async (req, res, next) => {
+    try {
+      const { bankId } = req.params;
+      const bankExist = await prisma.banks.findUnique({ where: { id: Number(bankId) } });
+      if (!bankExist) {
+        return res.status(404).json({
+          status: false,
+          message: 'Not Found',
+          err: 'Resource not found',
+          data: null,
+        });
+      }
+
+      await prisma.banks.delete({ where: { id: Number(bankId) } });
+      res.status(200).json({
+        status: true,
+        message: 'Delete banks successful',
+        err: null,
+        data: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
