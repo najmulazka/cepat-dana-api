@@ -66,4 +66,51 @@ module.exports = {
       next(err);
     }
   },
+
+  update: async (req, res, next) => {
+    try {
+      const { bankId } = req.params;
+      const { typeBank, cardNumber, cardName } = req.body;
+      const requiredFields = ['typeBank', 'cardNumber', 'cardName'];
+
+      for (const field of requiredFields) {
+        if (!req.body[field]) {
+          return res.status(400).json({
+            status: false,
+            message: 'Bad Request',
+            err: `field ${field} is required`,
+            data: null,
+          });
+        }
+      }
+
+      const bankExist = await prisma.banks.findUnique({ where: { id: Number(bankId) } });
+      if (!bankExist) {
+        return res.status(404).json({
+          status: false,
+          message: 'Not Found',
+          err: 'Resource not found',
+          data: null,
+        });
+      }
+
+      const bank = await prisma.banks.update({
+        where: { id: Number(bankId) },
+        data: {
+          typeBank,
+          cardNumber,
+          cardName,
+        },
+      });
+
+      res.status(200).json({
+        status: true,
+        message: 'Update bank successful',
+        err: null,
+        data: bank,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
