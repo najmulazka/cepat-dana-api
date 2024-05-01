@@ -1,6 +1,28 @@
 const prisma = require('../libs/prisma.libs');
 
 module.exports = {
+  index: async (req, res) => {
+    const emergencyNumber = await prisma.emergecyContacts.findMany();
+
+    res.status(200).json({
+      status: true,
+      message: 'Get emergencys number successfull',
+      err: null,
+      data: emergencyNumber,
+    });
+  },
+
+  show: async (req, res) => {
+    const emergencyNumber = await prisma.emergecyContacts.findMany({ where: { userId: req.user.id } });
+
+    res.status(200).json({
+      status: true,
+      message: 'Get emergency number successfull',
+      err: null,
+      data: emergencyNumber,
+    });
+  },
+
   input: async (req, res) => {
     const { number, fullName, relation } = req.body;
     const requiredFields = ['number', 'fullName', 'relation'];
