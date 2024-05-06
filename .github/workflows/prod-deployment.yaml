@@ -24,6 +24,8 @@ jobs:
 
       - name: Prisma migrate
         run: npx prisma migrate deploy --preview-feature
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
