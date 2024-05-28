@@ -95,4 +95,27 @@ module.exports = {
       data: emergencyNumber,
     });
   },
+
+  delet: async (req, res) => {
+    const { contactId } = req.params;
+
+    const contactExist = await prisma.emergecyContacts.findUnique({ where: { id: Number(contactId) } });
+    if (!contactExist) {
+      return res.status(400).json({
+        status: false,
+        message: 'Not Found',
+        err: 'Resource Not found',
+        data: null,
+      });
+    }
+
+    await prisma.emergecyContacts.delete({ where: { id: Number(contactId) } });
+
+    res.status(200).json({
+      status: true,
+      message: 'Delete emergency contact successfull',
+      err: null,
+      data: null,
+    });
+  },
 };
