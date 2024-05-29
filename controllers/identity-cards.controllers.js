@@ -124,18 +124,7 @@ module.exports = {
       const requiredFiles = ['selfiePhoto', 'identityCardImage'];
 
       const { identityCardNumber, placeBirth, dateBirth, gender, village, subdistrict, regency, province, country, address, religion, maritalStatus, jobs, isVerified } = req.body;
-      const requiredFields = ['identityCardNumber', 'placeBirth', 'dateBirth', 'gender', 'village', 'subdistrict', 'regency', 'province', 'country', 'address', 'religion', 'maritalStatus', 'jobs', 'isVerified'];
-
-      // Check req.body
-      for (const field of requiredFields) {
-        if (!req.body[field]) {
-          return res.status(400).json({
-            status: false,
-            message: 'Bad Request',
-            err: `field ${field} is required`,
-          });
-        }
-      }
+      
 
       if (isVerified !== 'true' && isVerified !== 'false') {
         return res.status(400).json({
