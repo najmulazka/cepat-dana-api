@@ -31,6 +31,6 @@ app.use('/api/v1', router);
 
 // error handler
 app.use(notFound);
-// app.use(serverError);
+app.use(serverError);
 
 app.listen(PORT, () => console.log('Running on port', PORT));
