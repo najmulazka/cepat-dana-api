@@ -123,4 +123,32 @@ module.exports = {
       next(err);
     }
   },
+
+  delet: async (req, res, next) => {
+    try {
+      const { temposId } = req.params;
+
+      const existTempo = await prisma.tempos.findUnique({ where: { id: Number(temposId) } });
+
+      if (!existTempo) {
+        return res.status(404).json({
+          status: false,
+          message: 'Not Found',
+          err: 'Resource Not Found',
+          data: null,
+        });
+      }
+
+      await prisma.tempos.delete({ where: { id: Number(temposId) } });
+
+      res.status(200).json({
+        status: true,
+        message: 'Delete tempo successful',
+        err: null,
+        data: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
