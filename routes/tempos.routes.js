@@ -1,8 +1,10 @@
 const express = require('express');
-const { input } = require('../controllers/tempos.controllers');
+const { input, show, index } = require('../controllers/tempos.controllers');
 const { admin } = require('../middlewares/admin.middlewares');
 const router = express.Router();
 
-router.post('/input', admin, input)
+router.get('/', admin, index);
+router.get('/show/:temposId', admin, show);
+router.post('/input', admin, input);
 
-module.exports = router
+module.exports = router;
